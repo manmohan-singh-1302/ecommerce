@@ -1,3 +1,5 @@
+const { rmSync } = require("fs");
+
 class ApiFeatures {
   constructor(query, queryStr) {
     this.query = query;
@@ -25,8 +27,24 @@ class ApiFeatures {
 
     removeFields.forEach((key) => delete queryCopy[key]);
 
+    let queryStr = JSON.stringify(queryCopy);
+
+    queryStr = queryStr.replace(/\b(gt|gte|le|lte)\b/g, (key) => `$${key}`);
+
     //now just assign the query
-    this.query = this.query.find(queryCopy);
+    this.query = this.query.find(JSON.parse(queryStr));
+
+    //this.query = this.query.find({query:{$regex:toString(queryCopy),$options:"i"}});
+    return this;
+  }
+
+  pagination(resultPerPage) {
+    const currentPage = Number(this.queryStr.page) || 1;
+
+    const skip = resultPerPage * (currentPage - 1);
+
+    this.query = this.query.limit(resultPerPage).skip(skip);
+
     return this;
   }
 }
